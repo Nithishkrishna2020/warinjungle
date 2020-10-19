@@ -4,10 +4,12 @@ var bulletImg;
 var backgroundImg;
 var lionImg,tigerImg;
 var deerImg,bearImg,zebraImg;
-var animalY = 0;
+var animalY = 1000;
 var gameOverImg,youWinImg,startButtonImg;
 var gameState = 0;
 var gamerOver,youWin,startButton;
+var bulletSound,youWinSound,gameOverSound,scoreSound; 
+var score = 0;
 
 function preload(){
   hunterImg = loadImage("player.png");
@@ -21,7 +23,10 @@ function preload(){
   gameOverImg = loadImage("gameOver.png");
   youWinImg = loadImage("youWin.png");
   startButtonImg = loadImage("startButton.png");
-  
+  bulletSound = loadSound("BulletSound.mp3");
+  youWinSound = loadSound("youWinSound.mp3");
+  gameOverSound = loadSound("gameOverSound.mp3");
+  scoreSound = loadSound("scoreSound.mp3");  
 
 }
 function setup() {
@@ -31,25 +36,34 @@ function setup() {
   hunter.addImage(hunterImg);
   animalGroup = new Group();
   bulletGroup = new Group();
-  startButton = createSprite(width/2-100,height/2+100);
+  startButton = createSprite(width/2,height/2+100);
   startButton.addImage(startButtonImg);
   startButton.scale = 0.5;
   gameOver = createSprite(width/2,height/2);
   gameOver.addImage(gameOverImg);
   gameOver.visible = false;
+  youWin = createSprite(width/2,height/2);
+  youWin.addImage(youWinImg);
+  youWin.visible = false;
 
   }
+
   
 
 
 function draw() {
-  background("lightblue");
+  background("lightblue");  
   image(backgroundImg,-1000,0,width*5,height);
+  text(mouseX+":"+mouseY,mouseX,mouseY);
   if(gameState === 0){
-
-    textSize(50);
-    fill("red")
-    text("War in jungle",width/2-200,height/2);
+    textSize(100);
+    fill("red");
+    textStyle(BOLD);
+    text("War in jungle",width/2-280,height/2-150);
+    textSize(20);
+    text("Shoot the animal to get the score.",width/2-150,height/2-100);
+    text("collect 10 points to win the game",width/2-150,height/2-50);
+    text("Dont touch the animal,when you touch the animal it will kill you",width/2-250,height/2);
     hunter.visible = false;
     if(mousePressedOver(startButton)){
       gameState = 1;
@@ -61,18 +75,30 @@ function draw() {
     hunter.visible = true;
     if(hunter.isTouching(animalGroup)){
       gameState = 2;
+      gameOverSound.play();
     }
-    
+    if(score === 10){
+      gameState = 3;
+      youWinSound.play();
+    }
+    textSize(50);
+    textStyle(BOLD);
+    fill("red");
+    text("Score: "+score,camera.position.x+400,50);
+
     
 
     playerControl(); 
     animals(); 
-    if(keyWentDown("space")){
+    if(keyWentDown("space")&&bulletGroup.length<=1){
       shoot();
+      bulletSound.play();
     }
     for(var i = 0;i<bulletGroup.length;i = i+1){
       for(var j = 0;j<animalGroup.length;j = j+1){
         if(bulletGroup.isTouching(animalGroup)){
+          scoreSound.play();
+          score = score+1;
           bulletGroup.get(i).destroy()
           animalGroup.get(j).destroy()
           
@@ -87,13 +113,19 @@ function draw() {
     animalGroup.destroyEach();
     gameOver.x = camera.position.x;
     gameOver.y = camera.position.y;
+    bulletGroup.destroyEach();
 
   }
+  else if(gameState === 3){
+    youWin.visible = true;
+    youWin.x = camera.position.x;
+    youWin.y = camera.position.y;
+    hunter.visible = false;
+    animalGroup.destroyEach();
+    bulletGroup.destroyEach();
+  } 
 
-
-
- 
-  drawSprites();
+  drawSprites();  
 
 }
 function playerControl(){
@@ -124,22 +156,23 @@ function playerControl(){
 
 }
 function shoot(){
+  
   var bullet = createSprite(hunter.x+100,hunter.y,10,10);
   bullet.addImage(bulletImg);
   bullet.scale = 0.1
   bullet.velocityX = 10;
   bullet.lifetime = floor(width/10);
   bulletGroup.add(bullet);
+  
 }
 function animals(){
   if(frameCount % 10 === 0&&animalGroup.length<5){
-    animalY = animalY+500
+    animalY = animalY+400
     var animal = createSprite(animalY,500,10,10);
     animal.y = random(100,height-100);
     animal.velocityX = -3;
     animal.velocitY = random(-1,1);
     var rand = floor(random(1,5));
-    animal.lifetime = floor(width/3);
     animalGroup.add(animal);
     switch(rand){
       case 1:animal.addImage(lionImg);
